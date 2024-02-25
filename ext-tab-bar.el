@@ -29,6 +29,8 @@
 (unless (version<= "28.1" emacs-version)
   (error "This package requires Emacs 28.1 or later"))
 
+(require 'cl-lib)
+
 (defgroup ext-tab-bar nil
   "Frame-local tabs with workspace and project information."
   :group 'convenience
@@ -79,6 +81,11 @@
     (const :tag "Insert as last element" end)
     (const :tag "Replace all other elements" replace)))
 
+(defcustom ext-tab-bar-segment-separator ""
+  "String that delimits segments."
+  :type 'string
+  :group 'ext-tab-bar)
+
 (defcustom ext-tab-bar-segment-list '(ext-tab-bar-debug-segment
                                       ext-tab-bar-project-segment)
   "`ext-tab-bar` segment list."
@@ -96,6 +103,11 @@
   :type 'string
   :group 'ext-tab-bar)
 
+(defcustom ext-tab-bar-project-disable-paths nil
+  "List of paths to disable project segment."
+  :type '(list :value-type string)
+  :group 'ext-tab-bar)
+
 (defun ext-tab-bar--format-project-string (project-dir)
   "Format PROJECT-DIR string."
   (let* ((suffix "/"))
@@ -110,6 +122,10 @@
          (project-name ext-tab-bar-project-default))
     (when current-project
       (setq project-name (project-root current-project)))
+    (when (and ext-tab-bar-project-disable-paths
+               (cl-loop for prefix in ext-tab-bar-project-disable-paths
+                        thereis (string-prefix-p prefix (expand-file-name project-name))))
+      (setq project-name ext-tab-bar-project-default))
     (propertize (format "[%s]" (ext-tab-bar--format-project-string project-name))
                 'face '(nil :inherit (ext-tab-bar-faces-default
                                       ext-tab-bar-faces-project)))))
@@ -124,7 +140,9 @@
 
 (defun ext-tab-bar--format ()
   "Return extended tab-bar string."
-  (mapconcat #'funcall ext-tab-bar-segment-list ""))
+  (concat (mapconcat #'funcall ext-tab-bar-segment-list
+                     ext-tab-bar-segment-separator)
+          ""))
 
 (defvar ext-tab-bar--temporary-bar nil)
 (defvar ext-tab-bar--previous-format nil)
