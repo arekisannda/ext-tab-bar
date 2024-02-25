@@ -2,6 +2,7 @@
 
 ;; Author: Alexander Chan
 ;; Maintainer: Alexander Chan
+;; Package-Requires: ((emacs "28.1"))
 
 ;; This file is not part of GNU Emacs
 
@@ -25,9 +26,6 @@
 ;; extra information.
 
 ;;; Code:
-
-(unless (version<= "28.1" emacs-version)
-  (error "This package requires Emacs 28.1 or later"))
 
 (require 'cl-lib)
 
