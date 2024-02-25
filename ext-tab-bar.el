@@ -42,7 +42,7 @@
 
 (defface ext-tab-bar-faces-default
   `((t :weight normal
-       :height ,(face-attribute 'default :height)))
+       :height 1.0))
   "Face for segment."
   :group 'ext-tab-bar-faces)
 
@@ -88,7 +88,8 @@
 (defun ext-tab-bar-debug-segment ()
   "Debug segment function."
   (propertize (if init-file-debug "[DEBUG]" "")
-              'face '(nil :inherit ext-tab-bar-faces-debug)))
+              'face '(nil :inherit (ext-tab-bar-faces-default
+                                    ext-tab-bar-faces-debug))))
 
 (defcustom ext-tab-bar-project-default "--"
   "String for when project is not set."
@@ -110,8 +111,8 @@
     (when current-project
       (setq project-name (project-root current-project)))
     (propertize (format "[%s]" (ext-tab-bar--format-project-string project-name))
-                'face '(nil :inherit ext-tab-bar-faces-project))
-    ))
+                'face '(nil :inherit (ext-tab-bar-faces-default
+                                      ext-tab-bar-faces-project)))))
 
 (defun ext-tab-bar--active-frame-p ()
   "Return t if current frame is active frame."
