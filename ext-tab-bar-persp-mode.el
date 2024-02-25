@@ -23,7 +23,8 @@
 (defun ext-tab-bar-perspective-segment ()
   "Perspective segment function."
   (propertize (format "[%s]" (safe-persp-name (get-current-persp)))
-              'face '(nil :inherit ext-tab-bar-faces-perspective)))
+              'face '(nil :inherit (ext-tab-bar-faces-default
+                                    ext-tab-bar-faces-perspective))))
 
 (defun ext-tab-bar-persp-mode-setup ()
   "Set up `ext-tab-bar-mode` for `persp-mode`."
