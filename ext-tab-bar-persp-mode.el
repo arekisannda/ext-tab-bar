@@ -26,6 +26,7 @@
               'face '(nil :inherit (ext-tab-bar-faces-default
                                     ext-tab-bar-faces-perspective))))
 
+;;;###autoload
 (defun ext-tab-bar-persp-mode-setup ()
   "Set up `ext-tab-bar-mode` for `persp-mode`."
   (interactive)
