@@ -145,6 +145,9 @@
 (defvar ext-tab-bar--temporary-bar nil)
 (defvar ext-tab-bar--previous-format nil)
 
+(defvar ext-tab-bar-teardown-hook nil
+  "A hook that is run after `ext-tab-bar` is disabled.")
+
 ;;;###autoload
 (define-minor-mode ext-tab-bar-mode
   "Show additional information in the tab bar."
@@ -179,6 +182,7 @@
     (when ext-tab-bar--temporary-bar
       (setq ext-tab-bar--temporary-bar nil)
       (tab-bar-mode -1))
+    (run-hooks 'ext-tab-bar-teardown-hook)
     (cond (ext-tab-bar--previous-format
            (setq tab-bar-format ext-tab-bar--previous-format)
            (setq ext-tab-bar--previous-format nil))
