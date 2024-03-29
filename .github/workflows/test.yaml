@@ -1,0 +1,20 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs-version:
+          - 29.1
+          - 28.2
+          - 28.1
+    steps:
+      - uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs-version }}
+      - uses: actions/checkout@v2
+      - name: Emacs version
+        run: |
+          emacs --version
