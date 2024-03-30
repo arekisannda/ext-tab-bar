@@ -126,7 +126,7 @@
   "`persp-mode` variant of `ext-tab-bar-persp-mode-kill`."
   (ext-tab-bar-persp-mode-kill (and _persp (safe-persp-name _persp))))
 
-(defun ext-tab-bar-persp-mode-teardown&--persp-mode ()
+(defun ext-tab-bar-persp-mode-teardown--persp-mode ()
   "Teardown function to remove `ext-tab-bar` setup for `persp-mode`."
   (remove-hook 'persp-created-functions #'ext-tab-bar-persp-mode-add--persp-mode)
   (remove-hook 'persp-before-deactivate-functions #'ext-tab-bar-persp-mode-update--persp-mode)
