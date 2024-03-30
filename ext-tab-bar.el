@@ -148,6 +148,63 @@
 (defvar ext-tab-bar-teardown-hook nil
   "A hook that is run after `ext-tab-bar` is disabled.")
 
+(defcustom ext-tab-bar-save-dir
+  (if (featurep 'no-littering)
+      (no-littering-expand-var-file-name "ext-tab-bar/")
+    (expand-file-name "ext-tab-bar/" user-emacs-directory))
+  "The directory to/from where `ext-tab-bar` state are saved."
+  :type 'string
+  :group 'ext-tab-bar)
+
+(defcustom ext-tab-bar-save-fname "etb-save"
+  "Name of `ext-tab-bar` state file."
+  :type 'string
+  :group 'ext-tab-bar)
+
+(defvar ext-tab-bar-state-hash (make-hash-table :test 'equal)
+  "Hash table containing `ext-tab-bar` states.")
+
+(defvar ext-tab-bar-before-load-hook nil
+  "Hook run before `ext-tab-bar-load-state-from-file` is called.")
+
+(defvar ext-tab-bar-after-load-hook nil
+  "Hook run after `ext-tab-bar-load-state-from-file` is called.")
+
+(defvar ext-tab-bar-before-save-hook nil
+  "Hook run before `ext-tab-bar-save-state-to-file` is called.")
+
+(defvar ext-tab-bar-after-save-hook nil
+  "Hook run after `ext-tab-bar-save-state-to-file` is called.")
+
+(defun ext-tab-bar-load-state-from-file ()
+  "Load `ext-tab-bar-state-hash` from file."
+  (interactive)
+  (when (or (not ext-tab-bar-save-dir) (not ext-tab-bar-save-fname))
+    (user-error "Unable to load `ext-tab-bar` state: invalid file name"))
+
+  (let ((fname (expand-file-name ext-tab-bar-save-fname ext-tab-bar-save-dir)))
+    (unless (file-exists-p fname)
+      (user-error "Unable to load `ext-tab-bar` state: unable to find save file"))
+
+    (run-hooks 'ext-tab-bar-before-load-hook)
+    (setq ext-tab-bar-state-hash (with-temp-buffer (insert-file-contents fname)
+                                                   (read (current-buffer))))
+    (run-hooks 'ext-tab-bar-after-load-hook)))
+
+(defun ext-tab-bar-save-state-to-file ()
+  "Save `ext-tab-bar-state-hash` to file."
+  (interactive)
+  (when (or (not ext-tab-bar-save-dir) (not ext-tab-bar-save-fname))
+    (user-error "Unable to save `ext-tab-bar` state: invalid file name"))
+
+  (unless (file-exists-p ext-tab-bar-save-dir)
+    (make-directory ext-tab-bar-save-dir t))
+
+  (let ((fname (expand-file-name ext-tab-bar-save-fname ext-tab-bar-save-dir)))
+    (run-hooks 'ext-tab-bar-before-save-hook)
+    (with-temp-file fname (prin1 ext-tab-bar-state-hash (current-buffer)))
+    (run-hooks 'ext-tab-bar-after-save-hook)))
+
 ;;;###autoload
 (define-minor-mode ext-tab-bar-mode
   "Show additional information in the tab bar."
@@ -157,6 +214,7 @@
     (unless tab-bar-mode
       (setq ext-tab-bar--temporary-bar t)
       (tab-bar-mode 1))
+    (ext-tab-bar-load-state-from-file)
     (cl-case ext-tab-bar-location
       (replace
        (setq ext-tab-bar--previous-format tab-bar-format)
@@ -182,6 +240,7 @@
     (when ext-tab-bar--temporary-bar
       (setq ext-tab-bar--temporary-bar nil)
       (tab-bar-mode -1))
+    (ext-tab-bar-save-state-to-file)
     (run-hooks 'ext-tab-bar-teardown-hook)
     (cond (ext-tab-bar--previous-format
            (setq tab-bar-format ext-tab-bar--previous-format)
