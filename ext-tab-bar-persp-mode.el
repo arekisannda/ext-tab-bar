@@ -58,11 +58,16 @@
 
 (defun ext-tab-bar-persp-mode-add (&optional persp)
   "Save new PERSP's `tab-bar` configuration."
-  (let ((persp (or persp (ext-tab-bar-persp-mode-curr-name))))
-    (if (gethash persp ext-tab-bar-persp-mode-killed-hash)
-        (remhash persp ext-tab-bar-persp-mode-killed-hash))
-    (puthash persp (frameset-filter-tabs (tab-bar-tabs) nil nil t)
-             ext-tab-bar-persp-mode-hash)))
+  (let* ((persp (or persp (ext-tab-bar-persp-mode-curr-name)))
+         (killed (gethash persp ext-tab-bar-persp-mode-killed-hash))
+         (conf (gethash persp ext-tab-bar-persp-mode-hash)))
+    (cond ((and persp killed)
+           ;; additiion of perspective with the name of a previously removed perspective
+           ;; remove perspective from killed-hash and use nil `tab-bar` config
+           (remhash persp ext-tab-bar-persp-mode-killed-hash)
+           (puthash persp nil ext-tab-bar-persp-mode-hash))
+          ((and persp conf)
+           (puthash persp conf ext-tab-bar-persp-mode-hash)))))
 
 (defun ext-tab-bar-persp-mode-load-from-state-hash ()
   "Load `ext-tab-bar` perspective state table."
@@ -174,7 +179,7 @@
 (defun ext-tab-bar-persp-mode-setup ()
   "Enable `ext-tab-bar` perspective extension."
   (interactive)
-  (ext-tab-bar-persp-mode-load-from-state-hash)
+  (add-hook 'ext-tab-bar-after-load-hook #'ext-tab-bar-persp-mode-load-from-state-hash)
   (add-hook 'ext-tab-bar-before-save-hook #'ext-tab-bar-persp-mode-save-to-state-hash)
   (add-hook 'ext-tab-bar-teardown-hook #'ext-tab-bar-persp-mode-teardown)
   (setq ext-tab-bar-segment-list '(ext-tab-bar-debug-segment
@@ -189,6 +194,7 @@
 (defun ext-tab-bar-persp-mode-teardown ()
   "Disable `ext-tab-bar` perspective extension."
   (interactive)
+  (remove-hook 'ext-tab-bar-after-load-hook #'ext-tab-bar-persp-mode-load-from-state-hash)
   (remove-hook 'ext-tab-bar-before-save-hook #'ext-tab-bar-persp-mode-save-to-state-hash)
   (remove-hook 'ext-tab-bar-teardown-hook #'ext-tab-bar-persp-mode-teardown)
   (setq ext-tab-bar-segment-list (cl-remove #'ext-tab-bar-persp-mode-segment
