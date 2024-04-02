@@ -9,6 +9,7 @@
 
 (require 'ext-tab-bar)
 (require 'tab-bar)
+(require 'persist)
 
 (defface ext-tab-bar-faces-perspective
   '((((background light)) :foreground "#0fffff"
@@ -20,7 +21,7 @@
   "Face for perspective segment."
   :group 'ext-tab-bar-faces)
 
-(defvar ext-tab-bar-persp-mode-hash (make-hash-table :test 'equal))
+(persist-defvar ext-tab-bar-persp-mode-hash (make-hash-table :test 'equal) nil)
 (defvar ext-tab-bar-persp-mode-killed-hash (make-hash-table :test 'equal))
 (defvar ext-tab-bar-persp-mode--previous-name nil)
 
@@ -69,22 +70,6 @@
           ((and persp conf)
            (puthash persp conf ext-tab-bar-persp-mode-hash)))))
 
-(defun ext-tab-bar-persp-mode-load-from-state-hash ()
-  "Load `ext-tab-bar` perspective state table."
-  (setq ext-tab-bar-persp-mode-hash (gethash "perspectives" ext-tab-bar-state-hash))
-  (ext-tab-bar-persp-mode-load))
-
-(defun ext-tab-bar-persp-mode-save-to-state-hash ()
-  "Update pespectives' `tab-bar` state in `ext-tab-bar-state-hash`."
-  (ext-tab-bar-persp-mode-update)
-
-  (let ((tmp-hash (make-hash-table :test 'equal)))
-    (dolist (persp-name (ext-tab-bar-persp-mode-list-persp-names))
-      (puthash persp-name (gethash persp-name ext-tab-bar-persp-mode-hash) tmp-hash))
-    (setq ext-tab-bar-persp-mode-hash tmp-hash))
-
-  (puthash "perspectives" ext-tab-bar-persp-mode-hash ext-tab-bar-state-hash))
-
 (defun ext-tab-bar-persp-mode-rename-set-previous-name ()
   "Save a perspective's old name before it is renamed."
   (setq ext-tab-bar-persp-mode--previous-name (ext-tab-bar-persp-mode-curr-name)))
@@ -106,10 +91,6 @@
     (remhash persp ext-tab-bar-persp-mode-hash)))
 
 ;;; --- persp-mode.el ---
-
-(defun ext-tab-bar--save-state-to-file-persp-mode (&optional _fname _hash _set)
-  "`persp-mode` variant of `ext-tab-bar-save-state-to-file`."
-  (ext-tab-bar-save-state-to-file))
 
 (defun ext-tab-bar-persp-mode-load--persp-mode (&optional _frame-or-window)
   "`persp-mode` variant of `ext-tab-bar-persp-mode-load`."
@@ -136,7 +117,6 @@
   (remove-hook 'persp-created-functions #'ext-tab-bar-persp-mode-add--persp-mode)
   (remove-hook 'persp-before-deactivate-functions #'ext-tab-bar-persp-mode-update--persp-mode)
   (remove-hook 'persp-activated-functions #'ext-tab-bar-persp-mode-load--persp-mode)
-  (remove-hook 'persp-before-save-state-to-file-functions #'ext-tab-bar--save-state-to-file-persp-mode)
   (remove-hook 'persp-renamed-functions #'ext-tab-bar-persp-mode-rename--persp-mode)
   (remove-hook 'persp-before-kill-functions #'ext-tab-bar-persp-mode-kill--persp-mode))
 
@@ -145,7 +125,6 @@
   (add-hook 'persp-created-functions #'ext-tab-bar-persp-mode-add--persp-mode)
   (add-hook 'persp-before-deactivate-functions #'ext-tab-bar-persp-mode-update--persp-mode)
   (add-hook 'persp-activated-functions #'ext-tab-bar-persp-mode-load--persp-mode)
-  (add-hook 'persp-before-save-state-to-file-functions #'ext-tab-bar--save-state-to-file-persp-mode)
   (add-hook 'persp-renamed-functions #'ext-tab-bar-persp-mode-rename--persp-mode)
   (add-hook 'persp-before-kill-functions #'ext-tab-bar-persp-mode-kill--persp-mode))
 
@@ -158,7 +137,6 @@
   (remove-hook 'persp-created-hook #'ext-tab-bar-persp-mode-add)
   (remove-hook 'persp-before-switch-hook #'ext-tab-bar-persp-mode-update)
   (remove-hook 'persp-activated-hook #'ext-tab-bar-persp-mode-load)
-  (remove-hook 'persp-state-before-save-hook #'ext-tab-bar-save-state-to-file)
   (remove-hook 'persp-before-rename-hook #'ext-tab-bar-persp-mode-rename-set-previous-name)
   (remove-hook 'persp-after-rename-hook #'ext-tab-bar-persp-mode-rename)
   (remove-hook 'persp-killed-hook #'ext-tab-bar-persp-mode-kill))
@@ -168,7 +146,6 @@
   (add-hook 'persp-created-hook #'ext-tab-bar-persp-mode-add)
   (add-hook 'persp-before-switch-hook #'ext-tab-bar-persp-mode-update)
   (add-hook 'persp-activated-hook #'ext-tab-bar-persp-mode-load)
-  (add-hook 'persp-state-before-save-hook #'ext-tab-bar-save-state-to-file)
   (add-hook 'persp-before-rename-hook #'ext-tab-bar-persp-mode-rename-set-previous-name)
   (add-hook 'persp-after-rename-hook #'ext-tab-bar-persp-mode-rename)
   (add-hook 'persp-killed-hook #'ext-tab-bar-persp-mode-kill))
@@ -179,8 +156,7 @@
 (defun ext-tab-bar-persp-mode-setup ()
   "Enable `ext-tab-bar` perspective extension."
   (interactive)
-  (add-hook 'ext-tab-bar-after-load-hook #'ext-tab-bar-persp-mode-load-from-state-hash)
-  (add-hook 'ext-tab-bar-before-save-hook #'ext-tab-bar-persp-mode-save-to-state-hash)
+  (add-hook 'kill-emacs-hook #'ext-tab-bar-persp-mode-update)
   (add-hook 'ext-tab-bar-teardown-hook #'ext-tab-bar-persp-mode-teardown)
   (setq ext-tab-bar-segment-list '(ext-tab-bar-debug-segment
                                    ext-tab-bar-persp-mode-segment
@@ -194,8 +170,7 @@
 (defun ext-tab-bar-persp-mode-teardown ()
   "Disable `ext-tab-bar` perspective extension."
   (interactive)
-  (remove-hook 'ext-tab-bar-after-load-hook #'ext-tab-bar-persp-mode-load-from-state-hash)
-  (remove-hook 'ext-tab-bar-before-save-hook #'ext-tab-bar-persp-mode-save-to-state-hash)
+  (remove-hook 'kill-emacs-hook #'ext-tab-bar-persp-mode-update)
   (remove-hook 'ext-tab-bar-teardown-hook #'ext-tab-bar-persp-mode-teardown)
   (setq ext-tab-bar-segment-list (cl-remove #'ext-tab-bar-persp-mode-segment
                                             ext-tab-bar-segment-list))
