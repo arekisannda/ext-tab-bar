@@ -2,7 +2,7 @@
 
 ;; Author: Alexander Chan
 ;; Maintainer: Alexander Chan
-;; Package-Requires: ((emacs "28.1") (persist "0.6"))
+;; Package-Requires: ((emacs "28.1"))
 
 ;; This file is not part of GNU Emacs
 

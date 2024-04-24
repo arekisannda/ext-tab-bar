@@ -9,7 +9,6 @@
 
 (require 'ext-tab-bar)
 (require 'tab-bar)
-(require 'persist)
 
 (defface ext-tab-bar-faces-perspective
   '((((background light)) :foreground "#0fffff"
@@ -21,9 +20,16 @@
   "Face for perspective segment."
   :group 'ext-tab-bar-faces)
 
-(persist-defvar ext-tab-bar-persp-mode-hash (make-hash-table :test 'equal) nil)
+(defvar ext-tab-bar-persp-mode-hash (make-hash-table :test 'equal))
 (defvar ext-tab-bar-persp-mode-killed-hash (make-hash-table :test 'equal))
 (defvar ext-tab-bar-persp-mode--previous-name nil)
+
+;;;###autoload
+(defun ext-tab-bar-persp-mode-set-hash-table (htable)
+  "Set `ext-tab-bar-persp-mode-hash` to HTABLE."
+  (unless (hash-table-p htable)
+    (user-error "Invalid hash table argument"))
+  (setq ext-tab-bar-persp-mode-hash htable))
 
 (defun ext-tab-bar-persp-mode-curr-name ()
   "Return name of current perspective."
